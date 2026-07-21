@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generación de Inventario</title>
+  <link href="https://unpkg.com/primeng@17.18.0/resources/themes/lara-light-blue/theme.css" rel="stylesheet">
+  <link href="https://unpkg.com/primeicons@7.0.0/primeicons.css" rel="stylesheet" crossorigin="anonymous">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font-family, system-ui, sans-serif);
+      background: #f8fafc;
+      color: var(--text-color, #4b5563);
+    }
+    .pi {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-style: normal; font-variant: normal; font-weight: normal;
+      font-size: 1rem; line-height: 1; display: inline-block;
+      min-width: 1em; text-rendering: auto;
+    }
+
+    /* ── Layout ── */
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-color, #4b5563);
+    }
+    .page-header p {
+      margin-top: 0.25rem;
+      font-size: 0.9rem;
+      color: var(--text-color-secondary, #6b7280);
+    }
+
+    /* ── Form body (sin card) ── */
+    .form-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ── Field ── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      min-width: 0;
+    }
+    .field label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-color, #4b5563);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* ── Text input ── */
+    .field-input {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9rem;
+      color: #334155;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    .field-input:focus {
+      border-color: var(--primary-color, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    /* ── Select (dropdown) ── */
+    .field-select-wrap {
+      position: relative;
+    }
+    .field-select {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0 2.25rem 0 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9rem;
+      color: #334155;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    .field-select:focus {
+      border-color: var(--primary-color, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    .field-select-wrap::after {
+      content: '\e902';
+      font-family: 'primeicons';
+      font-size: 0.85rem;
+      color: #64748b;
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    /* ── Multiselect (Zona de trabajo) ── */
+    .multiselect { position: relative; }
+    .multiselect-control {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0 2.25rem 0 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9rem;
+      color: #334155;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .multiselect-control:focus,
+    .multiselect.open .multiselect-control {
+      border-color: var(--primary-color, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    .multiselect-label {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .multiselect-placeholder { color: #94a3b8; }
+    .multiselect::after {
+      content: '\e902';
+      font-family: 'primeicons';
+      font-size: 0.85rem;
+      color: #64748b;
+      position: absolute;
+      right: 0.75rem;
+      top: 1.25rem;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .multiselect-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.12);
+      z-index: 30;
+      padding: 0.25rem;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .multiselect.open .multiselect-panel { display: block; }
+    .multiselect-panel .ms-option {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      white-space: normal;
+      color: #334155;
+    }
+    .multiselect-panel .ms-option:hover { background: #f1f5f9; }
+    .multiselect-panel .ms-option input { display: none; }
+    .ms-check {
+      width: 1.05rem;
+      height: 1.05rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ms-check .pi { font-size: 0.6rem; color: white; display: none; }
+    .ms-option input:checked + .ms-check { background: #3b82f6; border-color: #3b82f6; }
+    .ms-option input:checked + .ms-check .pi { display: inline; }
+
+    /* ── Field row — filtros ── */
+    .field-row {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .field-row .field { flex: 1; min-width: 160px; }
+    .field-row .field-action { flex: 0 0 auto; }
+
+    /* ── Info tooltip (hover) ── */
+    .info-tip { position: relative; display: inline-flex; }
+    .info-icon { color: #64748b; cursor: help; font-size: 0.9rem; }
+    .info-tip-text {
+      visibility: hidden; opacity: 0;
+      position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
+      width: 250px; background: #334155; color: #fff;
+      padding: 0.5rem 0.65rem; border-radius: 6px; font-size: 0.75rem;
+      font-weight: 400; line-height: 1.35; white-space: normal;
+      z-index: 20; transition: opacity 0.15s;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.18);
+    }
+    .info-tip-text::after {
+      content: ''; position: absolute; top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent; border-top-color: #334155;
+    }
+    .info-tip:hover .info-tip-text { visibility: visible; opacity: 1; }
+
+    /* ── Info icon dentro del campo (a un lado del input) ── */
+    .field-input-wrap { position: relative; }
+    .field-input-wrap .field-input { padding-right: 2.4rem; }
+    .info-tip-field {
+      position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%);
+    }
+    .info-tip-field .info-tip-text {
+      left: auto; right: -0.35rem; transform: none;
+    }
+    .info-tip-field .info-tip-text::after {
+      left: auto; right: 0.6rem; transform: none;
+    }
+
+    /* ── Panel (card) ── */
+    .panel {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .panel-header {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-weight: 600;
+      color: #334155;
+      font-size: 0.95rem;
+    }
+    .panel-body {
+      padding: 1rem;
+    }
+
+    /* ── DataTable ── */
+    .table-search-wrap {
+      position: relative;
+      margin-bottom: 0.75rem;
+    }
+    .table-search-wrap .pi-search {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    .table-search {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0 0.75rem 0 2.25rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9rem;
+      color: #334155;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    .table-search:focus {
+      border-color: var(--primary-color, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    .store-table-wrap {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .store-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      table-layout: fixed;
+    }
+    .store-table thead tr {
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .store-table thead th {
+      padding: 0.6rem 0.875rem;
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #334155;
+      letter-spacing: normal;
+    }
+    .store-table thead th:first-child {
+      width: 3rem;
+      text-align: center;
+    }
+    .store-table tbody tr {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .store-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .store-table tbody tr:hover {
+      background: #f1f5f9;
+    }
+    .store-table tbody tr.row-selected {
+      background: #eff6ff !important;
+    }
+    .store-table tbody td {
+      padding: 0 0.875rem;
+      height: 2.75rem;
+      color: #334155;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
+    .store-table tbody td:first-child {
+      text-align: center;
+    }
+    .table-empty {
+      padding: 1.5rem 0.875rem;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+
+    /* ── Custom checkbox ── */
+    .cb-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .cb-wrap input[type="checkbox"] {
+      display: none;
+    }
+    .cb-box {
+      position: relative;
+      width: 1.125rem;
+      height: 1.125rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 3px;
+      background: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+      overflow: hidden;
+      vertical-align: middle;
+    }
+    .cb-wrap input[type="checkbox"]:checked + .cb-box {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+    .cb-box .pi {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.65rem;
+      color: white;
+      display: none;
+    }
+    .cb-wrap input[type="checkbox"]:checked + .cb-box .pi-check {
+      display: inline;
+    }
+    .cb-box.indeterminate {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+    .cb-box.indeterminate .pi-minus { display: inline; }
+    .cb-box.indeterminate .pi-check { display: none !important; }
+
+    /* ── Footer ── */
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 0.5rem 1.25rem;
+      min-height: 2.5rem;
+      border: 1px solid #ced4da;
+      background: #e2e6ea;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: #6c757d;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #d3d9df; }
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    .btn-primary:hover { background: #2563eb; border-color: #2563eb; }
+    .btn-success {
+      background: #22c55e;
+      color: white;
+      border-color: #22c55e;
+    }
+    .btn-success:hover { background: #16a34a; border-color: #16a34a; }
+    .btn:disabled,
+    .btn:disabled:hover {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .generate-row { display: flex; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: min(430px, calc(100vw - 2rem));
+      padding: 0.65rem 0.8rem 0.65rem 0.7rem;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.1);
+      font-size: 0.82rem;
+      z-index: 1100;
+      animation: toastFade 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .toast.hidden { display: none; }
+    .toast-success { background: #ecfdf5; color: #10b981; border-left: 6px solid #10b981; }
+    .toast-warn    { background: #fffbeb; color: #f59e0b; border-left: 6px solid #f59e0b; }
+    .toast-icon    { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+    .toast-content { flex: 1; min-width: 0; }
+    .toast-title   { font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
+    .toast-message { margin-top: 0.1rem; font-size: 0.78rem; line-height: 1.3; }
+    .toast-close   { border: none; background: transparent; font-size: 1rem; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .toast-success .toast-close { color: #10b981; }
+    .toast-warn    .toast-close { color: #f59e0b; }
+    @keyframes toastFade {
+      from { opacity: 0; transform: translateX(1rem); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      width: min(380px, 100%);
+      box-shadow: 0 20px 50px rgba(15,23,42,0.25);
+      padding: 1.15rem 1.25rem 1.25rem;
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+      to   { opacity: 1; transform: none; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #374151;
+    }
+    .modal-close {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #9ca3af;
+      font-size: 1.05rem;
+      line-height: 1;
+      padding: 0.15rem;
+      display: inline-flex;
+    }
+    .modal-close:hover { color: #6b7280; }
+    .modal-body {
+      color: #4b5563;
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 0.5rem 0 1.25rem;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.6rem;
+    }
+    .modal-footer .btn {
+      padding: 0.45rem 0.9rem;
+      min-height: 2.2rem;
+      font-size: 0.85rem;
+    }
+    .btn-cambiar {
+      background: #d9534f;
+      color: #fff;
+      border-color: #d9534f;
+    }
+    .btn-cambiar:hover { background: #c9302c; border-color: #c9302c; }
+    .btn-usar {
+      background: #5cb85c;
+      color: #fff;
+      border-color: #5cb85c;
+    }
+    .btn-usar:hover { background: #449d44; border-color: #449d44; }
+  </style>
+</head>
+<body>
+
+  <!-- Toast -->
+  <div class="toast hidden" id="toast" role="status" aria-live="polite">
+    <i class="pi toast-icon" id="toastIcon" aria-hidden="true"></i>
+    <div class="toast-content">
+      <div class="toast-title" id="toastTitle"></div>
+      <div class="toast-message" id="toastText"></div>
+    </div>
+    <button type="button" class="toast-close" id="btnCloseToast" aria-label="Cerrar notificación">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <div class="app">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <h1>Generación de Inventario</h1>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card">
+
+      <!-- Filtros -->
+      <div class="field-row">
+        <div class="field">
+          <label for="cuenta">Cuenta</label>
+          <div class="field-select-wrap">
+            <select id="cuenta" class="field-select">
+              <option value="stl-crossdock">STL Crossdock</option>
+              <option value="stl-almacen">STL Almacén</option>
+              <option value="stl-tienda">STL Tienda</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Zona de trabajo</label>
+          <div class="multiselect" id="zonaMs">
+            <div class="multiselect-control" id="zonaControl" tabindex="0" role="button" aria-haspopup="listbox">
+              <span class="multiselect-label multiselect-placeholder" id="zonaLabel">Selecciona</span>
+            </div>
+            <div class="multiselect-panel" id="zonaPanel" role="listbox">
+              <label class="ms-option"><input type="checkbox" value="recibo"><span class="ms-check"><i class="pi pi-check"></i></span>Recibo</label>
+              <label class="ms-option"><input type="checkbox" value="almacenaje"><span class="ms-check"><i class="pi pi-check"></i></span>Almacenaje</label>
+              <label class="ms-option"><input type="checkbox" value="surtido"><span class="ms-check"><i class="pi pi-check"></i></span>Surtido</label>
+              <label class="ms-option"><input type="checkbox" value="embarque"><span class="ms-check"><i class="pi pi-check"></i></span>Embarque</label>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="producto">Producto</label>
+          <input id="producto" type="text" class="field-input" placeholder="SKU / Descripción de producto" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="folio">Nombre de folio</label>
+          <div class="field-input-wrap">
+            <input id="folio" type="text" class="field-input" placeholder="Opcional**" autocomplete="off">
+            <span class="info-tip info-tip-field">
+              <i class="pi pi-info-circle info-icon" aria-hidden="true"></i>
+              <span class="info-tip-text" role="tooltip">Nombre con el que se identificará esta generación de inventario.</span>
+            </span>
+          </div>
+        </div>
+        <div class="field field-action">
+          <button type="button" class="btn btn-primary" id="btnBuscar" disabled>
+            <i class="pi pi-search"></i> Buscar
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel de localidades -->
+      <div class="panel" id="localidadesPanel" style="display: none;">
+        <div class="panel-header" id="localidadesHeader">Localidades</div>
+        <div class="panel-body">
+          <div class="table-search-wrap">
+            <i class="pi pi-search"></i>
+            <input type="text" class="table-search" id="searchStore" placeholder="Buscar localidad..." autocomplete="off">
+          </div>
+          <div class="store-table-wrap">
+          <table class="store-table" id="storeTable">
+            <thead>
+              <tr>
+                <th>
+                  <label class="cb-wrap">
+                    <input type="checkbox" id="checkAll">
+                    <span class="cb-box" id="checkAllBox">
+                      <i class="pi pi-check"></i>
+                      <i class="pi pi-minus"></i>
+                    </span>
+                  </label>
+                </th>
+                <th>Localidad</th>
+              </tr>
+            </thead>
+            <tbody id="storeBody"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generar Conteo -->
+      <div class="form-footer" id="generarFooter" style="display: none;">
+        <button type="button" class="btn btn-success" id="btnGenerar" disabled>
+          Generar Conteo
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Configuración de conteos -->
+  <div class="modal-overlay" id="configModal" role="dialog" aria-modal="true" aria-labelledby="configModalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="configModalTitle">Configuración de conteos</div>
+        <button type="button" class="modal-close" id="configModalClose" aria-label="Cerrar">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">¿Deseas usar la configuración de conteos base?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cambiar" id="btnCambiarConfig">Cambiar configuración</button>
+        <button type="button" class="btn btn-usar" id="btnUsarBase">Usar conteo base</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var checkAll    = document.getElementById('checkAll');
+      var checkAllBox = document.getElementById('checkAllBox');
+      var storeBody   = document.getElementById('storeBody');
+      var searchStore = document.getElementById('searchStore');
+      var btnBuscar   = document.getElementById('btnBuscar');
+      var btnGenerar  = document.getElementById('btnGenerar');
+      var localidadesPanel = document.getElementById('localidadesPanel');
+      var localidadesHeader = document.getElementById('localidadesHeader');
+      var generarFooter    = document.getElementById('generarFooter');
+      var cuenta      = document.getElementById('cuenta');
+      var producto    = document.getElementById('producto');
+      var folio       = document.getElementById('folio');
+      var zonaMs      = document.getElementById('zonaMs');
+      var zonaControl = document.getElementById('zonaControl');
+      var zonaLabel   = document.getElementById('zonaLabel');
+      var zonaPanel   = document.getElementById('zonaPanel');
+      var zonaOptions = zonaPanel.querySelectorAll('input[type="checkbox"]');
+      var toastEl     = document.getElementById('toast');
+      var toastIcon   = document.getElementById('toastIcon');
+      var toastTitle  = document.getElementById('toastTitle');
+      var toastText   = document.getElementById('toastText');
+      var toastTimer  = null;
+
+      function showToast(type, title, message) {
+        toastEl.className = 'toast toast-' + type;
+        toastIcon.className = 'pi toast-icon ' + (type === 'success' ? 'pi-check-circle' : 'pi-exclamation-triangle');
+        toastTitle.textContent = title;
+        toastText.textContent  = message;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.add('hidden'); }, 4000);
+      }
+
+      document.getElementById('btnCloseToast').addEventListener('click', function () {
+        toastEl.classList.add('hidden');
+      });
+
+      /* ── Datos por zona de trabajo ── */
+      var zonas = {
+        recibo:     { nombre: 'Recibo',     prefijo: 'REC' },
+        almacenaje: { nombre: 'Almacenaje', prefijo: 'ALM' },
+        surtido:    { nombre: 'Surtido',    prefijo: 'SUR' },
+        embarque:   { nombre: 'Embarque',   prefijo: 'EMB' }
+      };
+      var cuentaPrefijo = {
+        'stl-crossdock': 'XDK',
+        'stl-almacen':   'ALM',
+        'stl-tienda':    'TDA'
+      };
+
+      /* ── Zonas seleccionadas en el multiselect ── */
+      function getZonasSeleccionadas() {
+        return Array.prototype.filter.call(zonaOptions, function (c) { return c.checked; })
+          .map(function (c) { return c.value; });
+      }
+
+      /* ── Genera las localidades en función de lo ingresado arriba ── */
+      function renderLocalidades() {
+        var seleccion = getZonasSeleccionadas();
+        var cta = cuentaPrefijo[cuenta.value] || 'GEN';
+        var prod = producto.value.trim();
+        var html = '';
+        seleccion.forEach(function (zv) {
+          var z = zonas[zv] || { nombre: 'General', prefijo: 'LOC' };
+          for (var i = 1; i <= 4; i++) {
+            var nn = (i < 10 ? '0' : '') + i;
+            var id = cta + '-' + z.prefijo + '-' + nn;
+            var nombre = id + ' — ' + z.nombre + (prod ? ' · ' + prod : '');
+            html += '<tr data-id="' + id + '">' +
+              '<td><label class="cb-wrap"><input type="checkbox" class="row-cb">' +
+              '<span class="cb-box"><i class="pi pi-check"></i></span></label></td>' +
+              '<td>' + nombre + '</td></tr>';
+          }
+        });
+        storeBody.innerHTML = html;
+        searchStore.value = '';
+        checkAll.checked = false;
+        checkAll.indeterminate = false;
+        checkAllBox.classList.remove('indeterminate');
+        syncSelectAll();
+      }
+
+      /* ── Habilitación de botones (estado inicial deshabilitado, como la imagen) ── */
+      function refreshButtons() {
+        btnBuscar.disabled = !(cuenta.value && getZonasSeleccionadas().length > 0 && producto.value.trim());
+        btnGenerar.disabled = storeBody.querySelectorAll('.row-cb:checked').length === 0;
+      }
+
+      /* ── Sync select-all checkbox visual state (solo filas visibles) ── */
+      function visibleRows() {
+        return Array.prototype.filter.call(storeBody.querySelectorAll('tr'), function (row) {
+          return row.style.display !== 'none';
+        });
+      }
+
+      function syncSelectAll() {
+        var rows    = visibleRows();
+        var total   = rows.length;
+        var checked = rows.filter(function (row) {
+          var cb = row.querySelector('.row-cb');
+          return cb && cb.checked;
+        }).length;
+
+        checkAllBox.classList.remove('indeterminate');
+        if (total === 0 || checked === 0) {
+          checkAll.checked = false;
+          checkAll.indeterminate = false;
+        } else if (checked === total) {
+          checkAll.checked = true;
+          checkAll.indeterminate = false;
+        } else {
+          checkAll.checked = false;
+          checkAll.indeterminate = true;
+          checkAllBox.classList.add('indeterminate');
+        }
+        refreshButtons();
+      }
+
+      /* ── Selección de fila (clic en cualquier parte, incluido el checkbox) ── */
+      storeBody.addEventListener('click', function (e) {
+        var row = e.target.closest('tr');
+        if (!row) return;
+        var cb = row.querySelector('.row-cb');
+        if (!cb) return;
+        // Evitamos el toggle nativo (input display:none) y controlamos el estado nosotros.
+        e.preventDefault();
+        cb.checked = !cb.checked;
+        row.classList.toggle('row-selected', cb.checked);
+        syncSelectAll();
+      });
+
+      /* ── Seleccionar todo (solo filas visibles) ── */
+      checkAll.closest('label').addEventListener('click', function (e) {
+        e.preventDefault();
+        var rows = visibleRows();
+        var allChecked = rows.length > 0 && rows.every(function (row) {
+          return row.querySelector('.row-cb').checked;
+        });
+        var newState = !allChecked;
+        rows.forEach(function (row) {
+          var cb = row.querySelector('.row-cb');
+          cb.checked = newState;
+          row.classList.toggle('row-selected', newState);
+        });
+        syncSelectAll();
+      });
+
+      /* ── Búsqueda en vivo ── */
+      searchStore.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        storeBody.querySelectorAll('tr').forEach(function (row) {
+          var text = row.textContent.toLowerCase();
+          row.style.display = text.indexOf(q) !== -1 ? '' : 'none';
+        });
+        syncSelectAll();
+      });
+
+      /* ── Filtros: habilitan el botón Buscar ── */
+      [cuenta, producto, folio].forEach(function (el) {
+        el.addEventListener('input', refreshButtons);
+        el.addEventListener('change', refreshButtons);
+      });
+
+      /* ── Multiselect Zona de trabajo ── */
+      function updateZonaLabel() {
+        var sel = getZonasSeleccionadas();
+        if (sel.length === 0) {
+          zonaLabel.textContent = 'Selecciona';
+          zonaLabel.classList.add('multiselect-placeholder');
+        } else {
+          zonaLabel.classList.remove('multiselect-placeholder');
+          zonaLabel.textContent = sel.map(function (v) { return zonas[v].nombre; }).join(', ');
+        }
+      }
+      zonaControl.addEventListener('click', function () {
+        zonaMs.classList.toggle('open');
+      });
+      zonaPanel.addEventListener('change', function () {
+        updateZonaLabel();
+        refreshButtons();
+      });
+      document.addEventListener('click', function (e) {
+        if (!zonaMs.contains(e.target)) zonaMs.classList.remove('open');
+      });
+
+      /* ── Buscar ── */
+      btnBuscar.addEventListener('click', function () {
+        renderLocalidades();
+        localidadesPanel.style.display = '';
+        generarFooter.style.display = '';
+      });
+
+      /* ── Generar Conteo → abre modal de configuración ── */
+      var configModal      = document.getElementById('configModal');
+      var configModalClose = document.getElementById('configModalClose');
+      var btnCambiarConfig = document.getElementById('btnCambiarConfig');
+      var btnUsarBase      = document.getElementById('btnUsarBase');
+
+      function closeConfigModal() { configModal.classList.remove('open'); }
+
+      btnGenerar.addEventListener('click', function () {
+        if (storeBody.querySelectorAll('.row-cb:checked').length === 0) {
+          showToast('warn', 'Validación', 'Selecciona al menos una localidad para generar el conteo.');
+          return;
+        }
+        configModal.classList.add('open');
+      });
+
+      configModalClose.addEventListener('click', closeConfigModal);
+      btnCambiarConfig.addEventListener('click', closeConfigModal);
+      configModal.addEventListener('click', function (e) {
+        if (e.target === configModal) closeConfigModal();
+      });
+
+      btnUsarBase.addEventListener('click', function () {
+        closeConfigModal();
+        var selected = storeBody.querySelectorAll('.row-cb:checked').length;
+        var folioVal = folio.value.trim();
+        var detail = 'Conteo generado con ' + selected + ' localidad' + (selected > 1 ? 'es' : '') +
+          (folioVal ? ' (folio: "' + folioVal + '")' : '') + '.';
+        showToast('success', 'Conteo generado', detail);
+      });
+
+      /* ── Estado inicial ── */
+      refreshButtons();
+    })();
+  </script>
+</body>
+</html>
